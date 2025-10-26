@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Web Crawler</title>
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load Lucide icons for clean UI elements -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Custom font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc; /* Slate 50 */
+    }
+    /* Simple utility to ensure icons are rendered */
+    .lucide {
+        stroke-width: 2.5;
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex items-start justify-center">
+
+  <!-- Main Container Card -->
+  <div class="w-full max-w-xl bg-white p-6 md:p-8 rounded-xl shadow-2xl border border-gray-100">
+    <header class="text-center mb-6">
+      <h1 class="text-3xl font-bold text-gray-800 flex items-center justify-center space-x-2">
+        <i data-lucide="spider"></i>
+        <span>Web Crawler</span>
+      </h1>
+      <p class="text-gray-500 text-sm mt-1">Configure your web scraping task.</p>
+    </header>
+
+    <!-- Hidden Input for User ID - SIMULATING BACKEND INJECTION -->
+    <!-- In a Django template, this value would be dynamically set, e.g., value="{{ request.user.id }}" -->
+    <input type="hidden" id="userIdField" value="{{ request.user.id }}" />
+    
+    <!-- Status Message Box (Replaces alert()) -->
+    <div id="message-box" class="hidden p-3 mb-4 rounded-lg text-sm transition-all duration-300" role="alert"></div>
+
+    <form id="scrape-form">
+      <div class="mb-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Scraping Mode</label>
+        <div class="flex space-x-6">
+          <label class="inline-flex items-center text-gray-700 cursor-pointer">
+            <input type="radio" name="scrape_mode" value="single" checked class="form-radio text-indigo-600 focus:ring-indigo-500 rounded-full h-4 w-4 transition duration-150 ease-in-out">
+            <span class="ml-2 font-medium">Single Page</span>
+          </label>
+          <label class="inline-flex items-center text-gray-700 cursor-pointer">
+            <input type="radio" name="scrape_mode" value="sitemap" class="form-radio text-indigo-600 focus:ring-indigo-500 rounded-full h-4 w-4 transition duration-150 ease-in-out">
+            <span class="ml-2 font-medium">Full Sitemap</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label for="scrape-url" class="block text-sm font-semibold text-gray-700 mb-2">Target URL or Sitemap</label>
+        <input
+          type="url"
+          id="scrape-url"
+          name="scrape_url"
+          placeholder="e.g., https://example.com/sitemap.xml"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
+        />
+      </div>
+
+      <button type="submit" id="start-button" class="w-full flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition duration-200 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+        <i data-lucide="play"></i>
+        <span>Start Scraping</span>
+      </button>
+    </form>
+
+    <!-- Status section -->
+    <div id="status-section" class="mt-8 pt-6 border-t border-gray-200 hidden">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center space-x-2">
+        <i data-lucide="monitor-dot"></i>
+        <span>Live Status</span>
+      </h2>
+      <div class="space-y-3">
+        <p class="flex justify-between text-sm text-gray-600">
+          <span class="font-medium text-gray-800">Scraped Pages:</span>
+          <span id="scraped-pages" class="font-bold text-indigo-600">0</span>
+        </p>
+        <p class="flex justify-between text-sm text-gray-600">
+          <span class="font-medium text-gray-800">Remaining Pages:</span>
+          <span id="remaining-pages" class="font-bold text-indigo-600">0</span>
+        </p>
+        <p class="text-sm text-gray-600">
+          <span class="font-medium text-gray-800 block mb-1">Currently Scraping:</span>
+          <span id="current-url" class="block text-xs font-mono bg-gray-100 p-2 rounded-md truncate">None</span>
+        </p>
+        <p class="flex justify-between text-sm text-gray-600">
+          <span class="font-medium text-gray-800">Total Characters Scraped:</span>
+          <span id="total-chars" class="font-bold text-indigo-600">0</span>
+        </p>
+        <p id="scraping-completed" class="hidden mt-4 text-center p-3 bg-green-100 text-green-700 font-semibold rounded-lg text-base">
+          <i data-lucide="check-circle" class="inline-block mr-2"></i>
+          🎉 Scraping Completed!
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    let pollingInterval = null;
+    const userIdField = document.getElementById('userIdField');
+    const startButton = document.getElementById('start-button');
+    const messageBox = document.getElementById('message-box');
+    const statusSection = document.getElementById('status-section');
+    
+    // The user ID from the hidden field (simulating backend injection)
+    const userId = userIdField.value;
+
+    /**
+     * Shows a non-blocking message to the user.
+     * @param {string} message The message content.
+     * @param {string} type The type of message ('success', 'error', 'info').
+     */
+    function showMessage(message, type = 'info') {
+      messageBox.textContent = message;
+      messageBox.className = 'p-3 mb-4 rounded-lg text-sm transition-all duration-300';
+      
+      let baseClasses = 'bg-blue-100 text-blue-800'; // Default info
+      if (type === 'success') {
+        baseClasses = 'bg-green-100 text-green-800';
+      } else if (type === 'error') {
+        baseClasses = 'bg-red-100 text-red-800';
+      }
+      
+      messageBox.classList.add(...baseClasses.split(' '), 'block');
+      setTimeout(() => messageBox.classList.remove('block'), 5000); // Hide after 5 seconds
+    }
+
+    /**
+     * Fetches and updates the current scraping status.
+     */
+    async function updateStatus() {
+      // Use the dynamically retrieved userId
+      if (!userId || userId === 'placeholder-user-id-123') {
+        console.error("User ID is not set or is a placeholder.");
+        clearInterval(pollingInterval);
+        pollingInterval = null; // Ensure we clear the interval and stop polling
+        return;
+      }
+
+      try {
+        const response = await fetch(`/bot/api/scrape/status/${userId}/`);
+        const data = await response.json();
+
+        if (data.error && data.scraped_pages === 0) {
+            // If we get an error response (like "No task found") and nothing was scraped, 
+            // the task is definitely not active. Stop polling immediately.
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            // Only show the error if it's not the generic "No scraping task found" message,
+            // which occurs on page load if no scrape is running.
+            if (data.error !== "No scraping task found for this user_id.") {
+                 showMessage(`Error checking status: ${data.error}`, 'error');
+            }
+            startButton.disabled = false;
+            startButton.textContent = 'Start Scraping';
+            lucide.createIcons();
+            return;
+        }
+
+        document.getElementById("scraped-pages").textContent = data.scraped_pages || 0;
+        document.getElementById("remaining-pages").textContent = data.remaining_pages || 0;
+        document.getElementById("current-url").textContent = data.current_url || "None";
+        document.getElementById("total-chars").textContent = data.total_characters_scraped || 0;
+        document.getElementById("scraping-completed").classList.add("hidden");
+
+        // --- FIXED POLLING STOP CONDITION ---
+        // Stop if scraping is finished (is_scraping=false AND remaining_pages=0)
+        if (data.remaining_pages === 0 && data.is_scraping === false) {
+          clearInterval(pollingInterval);
+          pollingInterval = null;
+          
+          if (data.scraped_pages > 0) {
+            // Only show completion if actual work was done
+            document.getElementById("scraping-completed").classList.remove("hidden");
+            showMessage("Scraping Completed! See details below.", 'success');
+          } else if (data.error) {
+            // Show error if it finished immediately due to an error (e.g., empty sitemap)
+            showMessage(`Scraping finished with error: ${data.error}`, 'error');
+          }
+
+          startButton.disabled = false;
+          startButton.textContent = 'Start Scraping';
+          lucide.createIcons();
+        } else if (data.is_scraping === true) {
+             startButton.textContent = 'Scraping in Progress...';
+             startButton.disabled = true;
+        }
+
+      } catch (error) {
+        console.error("Network error during status update:", error);
+        // On network error, stop polling to prevent spamming
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+        startButton.disabled = false;
+        startButton.textContent = 'Start Scraping';
+        lucide.createIcons();
+      }
+    }
+
+    /**
+     * Handles the form submission to start the scraping job.
+     * @param {Event} e The submit event.
+     */
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+
+      if (pollingInterval) {
+        showMessage("A scraping job is already running.", 'info');
+        return;
+      }
+      
+      // Reset status section
+      statusSection.classList.add("hidden");
+      document.getElementById("scraping-completed").classList.add("hidden");
+      
+      const form = e.target;
+      const formData = new FormData(form);
+      const scrape_mode = formData.get('scrape_mode');
+      const scrape_url = formData.get('scrape_url');
+
+      if (!scrape_url || !scrape_mode) {
+        showMessage("Please provide both the scrape URL and scrape mode.", 'error');
+        return;
+      }
+      
+      if (!userId || userId === 'placeholder-user-id-123') {
+          showMessage("Cannot start scrape: User is not authenticated (Placeholder ID detected).", 'error');
+          console.error("Cannot start scrape: User ID is not set or is a placeholder.");
+          return;
+      }
+
+      startButton.textContent = 'Starting...';
+      startButton.disabled = true;
+
+      // Create the JSON payload
+      const payload = {
+        "scrape_url": scrape_url,
+        "scrape_mode": scrape_mode,
+        "user_id": userId, // *** USING DYNAMIC LOGGED-IN USER ID ***
+        "rem_link": 10 // Placeholder for quota
+      };
+
+      try {
+        const response = await fetch("/bot/api/scrape/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const responseData = await response.json();
+
+        if (response.ok) {
+          showMessage("Scraping successfully started! Status updates below.", 'success');
+          statusSection.classList.remove("hidden");
+          // Initialize status immediately
+          updateStatus();
+          // Start polling for status updates every second
+          pollingInterval = setInterval(updateStatus, 1000);
+        } else {
+          // Handle API errors (e.g., URL invalid, quota exceeded)
+          const errorMsg = responseData.error || responseData.detail || "Unknown error.";
+          showMessage(`Error starting scrape: ${errorMsg}`, 'error');
+          startButton.textContent = 'Start Scraping';
+          startButton.disabled = false;
+          lucide.createIcons(); // Re-render icon
+        }
+
+      } catch (error) {
+        console.error("Network error during scrape start:", error);
+        showMessage("A network error occurred. Could not connect to the API.", 'error');
+        startButton.textContent = 'Start Scraping';
+        startButton.disabled = false;
+        lucide.createIcons(); // Re-render icon
+      }
+    }
+
+    // Attach event listener to the form
+    document.getElementById("scrape-form").addEventListener("submit", handleFormSubmit);
+
+    // Initial status check in case a scrape was already running when the page loaded
+    setTimeout(() => {
+        if (userId && userId !== 'placeholder-user-id-123') {
+            updateStatus();
+            statusSection.classList.remove("hidden");
+            // If a scrape is found to be running by updateStatus, pollingInterval will be started later.
+            // If no scrape is found, updateStatus will stop polling if it was started.
+            if (!pollingInterval) {
+                // We start polling here only for the initial check on load.
+                // updateStatus will immediately clear it if no task is active.
+                pollingInterval = setInterval(updateStatus, 1000);
+            }
+        }
+    }, 50);
+
+  </script>
+
+</body>
+</html>
