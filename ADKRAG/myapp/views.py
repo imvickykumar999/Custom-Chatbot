@@ -19,7 +19,7 @@ from django.contrib.auth import login
 
 # Import the ADK Agent (Corrected path)
 try:
-    from myadk.wikipedia_analyst.root_agent import root_agent
+    from myadk.wikipedia_analyst.agent import root_agent
 except ImportError:
     print("WARNING: ADK agent not found. Chat API will be disabled.")
     root_agent = None

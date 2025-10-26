@@ -599,10 +599,10 @@
                 // 3. Show loading indicator
                 showLoading();
 
-                // --- NEW: Implement 30-Second Timeout using AbortController ---
+                // --- NEW: Implement 120-Second Timeout using AbortController ---
                 const controller = new AbortController();
-                // Set the timeout ID to 30,000 milliseconds (30 seconds)
-                const timeoutId = setTimeout(() => controller.abort(), 30000); 
+                // Set the timeout ID to 120,000 milliseconds (120 seconds)
+                const timeoutId = setTimeout(() => controller.abort(), 120000); 
                 // --- END NEW ---
 
                 try {
@@ -647,7 +647,7 @@
                     
                     // --- NEW: Check for Abort (Timeout) Error ---
                     if (error.name === 'AbortError') {
-                        addMessage(`**Timeout Error:** The server took longer than 30 seconds to respond. The request was cancelled. Please check the Django server performance.`, 'agent', true);
+                        addMessage(`**Timeout Error:** The server took longer than 120 seconds to respond. The request was cancelled. Please check the Django server performance.`, 'agent', true);
                     } else {
                         // 6. Display network error
                         addMessage('Network Error: Could not reach the server.', 'agent');

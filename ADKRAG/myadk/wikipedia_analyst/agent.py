@@ -1,3 +1,4 @@
+
 from google.adk.agents import Agent
 # from google.adk.tools import google_search
 import requests
@@ -5,7 +6,7 @@ import json
 from typing import Dict, Any
 
 # Define the constant URL outside the function signature to simplify parsing
-LOCAL_API_URL = "http://127.0.0.1:5000/api/search"
+LOCAL_API_URL = "http://127.0.0.1:8000/bot/api/search/"
 
 def search_api(question: str) -> str:
     """
@@ -30,7 +31,7 @@ def search_api(question: str) -> str:
 
     try:
         # Use a timeout for stability
-        response = requests.post(url, headers=headers, data=payload, timeout=10)
+        response = requests.post(url, headers=headers, data=payload, timeout=120)
         response.raise_for_status()  # Raises an HTTPError if the response was an error
         
         # Return the raw JSON text for the LLM to parse and summarize
@@ -67,3 +68,4 @@ root_agent = Agent(
         search_api, 
     ],
 )
+
