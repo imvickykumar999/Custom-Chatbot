@@ -636,9 +636,17 @@
                         // After a successful chat, reload session list to reflect changes/new sessions
                         loadChatData(); 
                     } else {
-                        const errorMsg = data.response || (data.message && data.message[0]) || 'Login to chat with the agent.';
-                        addMessage(`<strong>Note:</strong> ${errorMsg}`, 'agent', true);
-                        console.error('Agent API Error:', data);
+                        // 1. Determine the error message
+                        const errorMsg = data.response || (data.message && data.message[0]) || 'Login to chat with the agent';
+                        
+                        // 2. Hide loading indicator (already done, but reiterating context)
+                        hideLoading();
+
+                        // 3. Display the error message with the hardcoded link for "here"
+                        // This uses the anchor tag you provided and inserts the message as trusted HTML (true).
+                        addMessage(`<strong>Note:</strong> ${errorMsg} <a href="{% url 'login' %}" class="text-green-600 font-bold hover:underline">here</a>`, 'agent', true);
+                        
+                        console.error('Agent API Error:', data);
                     }
 
                 } catch (error) {
