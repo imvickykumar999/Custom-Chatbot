@@ -98,7 +98,7 @@ def index(request):
         print(f"Error fetching AppSettings: {e}")
         settings_obj = AppSettings(
             website_name="Vick's ChatBot",
-            website_link='https://github.com/imvickykumar999/ADK-Django',
+            website_link='https://github.com/imvickykumar999/Custom-Chatbot',
             website_logo_url='https://avatars.githubusercontent.com/u/67197854',
             theme_color='indigo',
         )

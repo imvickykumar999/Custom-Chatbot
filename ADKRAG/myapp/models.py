@@ -52,7 +52,7 @@ class AppSettings(models.Model):
     )
     website_link = models.URLField(
         max_length=255, 
-        default='https://github.com/imvickykumar999/ADK-Django',
+        default='https://github.com/imvickykumar999/Custom-Chatbot',
         verbose_name="Primary Website Link"
     )
     website_logo_url = models.URLField(

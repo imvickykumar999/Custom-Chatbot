@@ -46,7 +46,10 @@ def get_document_options_from_db():
     Fetches unique content summaries (documents) from the ScrapedDataEntry model.
     """
     # Exclude entries that are null or empty
-    entries = ScrapedDataEntry.objects.exclude(content_summary__isnull=True).exclude(content_summary__exact='').values_list('content_summary', flat=True)
+    entries = ScrapedDataEntry.objects.exclude(
+        content_summary__isnull=True
+        ).exclude(content_summary__exact=''
+        ).values_list('content_summary', flat=True)
     
     # Return a list of unique document strings
     return list(set(entries))
@@ -463,7 +466,7 @@ def scrape(request):
         print(f"Error fetching AppSettings: {e}")
         settings_obj = AppSettings(
             website_name="Vick's ChatBot",
-            website_link='https://github.com/imvickykumar999/ADK-Django',
+            website_link='https://github.com/imvickykumar999/Custom-Chatbot',
             website_logo_url='https://avatars.githubusercontent.com/u/67197854',
             theme_color='indigo',
         )
