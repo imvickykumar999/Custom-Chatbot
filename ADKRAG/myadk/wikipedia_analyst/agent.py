@@ -5,8 +5,12 @@ import requests
 import json
 from typing import Dict, Any
 
-# Define the constant URL outside the function signature to simplify parsing
-LOCAL_API_URL = "http://127.0.0.1:8000/bot/api/search/"
+import os
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
+
+BASE_URL = os.getenv("DJANGO_BASE_URL", "http://127.0.0.1:8000")
+LOCAL_API_URL = f"{BASE_URL}/bot/api/search/" 
 
 def search_api(question: str) -> str:
     """
