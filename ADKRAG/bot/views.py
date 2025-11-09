@@ -13,6 +13,7 @@ from crawl4ai import AsyncWebCrawler
 from bs4 import BeautifulSoup
 from pydantic import BaseModel, HttpUrl, Field
 from typing import Optional
+from myapp.models import AppSettings
 
 # Store status for each user (this could be moved to a database if persistence is required)
 scraping_status = {}
@@ -522,4 +523,22 @@ def get_scrape_status(request, user_id):
 # Django view for scrape page
 def scrape(request):
     # This view is for rendering the HTML template
-    return render(request, 'index.html')
+
+    try:
+        # Filtering by the logged-in user: request.user
+        settings_obj, created = AppSettings.objects.get_or_create(user=request.user)
+    except Exception as e:
+        # Fallback to hardcoded defaults in case of a serious DB issue
+        print(f"Error fetching AppSettings: {e}")
+        settings_obj = AppSettings(
+            website_name="Vick's ChatBot",
+            website_link='https://github.com/imvickykumar999/ADK-Django',
+            website_logo_url='https://avatars.githubusercontent.com/u/67197854',
+            theme_color='indigo',
+        )
+
+    MyThemeColor = settings_obj.theme_color
+
+    return render(request, 'index.html', {
+        'MyThemeColor' : MyThemeColor,
+    })

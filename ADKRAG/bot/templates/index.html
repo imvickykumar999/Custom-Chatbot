@@ -47,11 +47,11 @@
         <label class="block text-sm font-semibold text-gray-700 mb-2">Scraping Mode</label>
         <div class="flex space-x-6">
           <label class="inline-flex items-center text-gray-700 cursor-pointer">
-            <input type="radio" name="scrape_mode" value="single" checked class="form-radio text-indigo-600 focus:ring-indigo-500 rounded-full h-4 w-4 transition duration-150 ease-in-out">
+            <input type="radio" name="scrape_mode" value="single" checked class="form-radio text-{{ MyThemeColor }}-600 focus:ring-{{ MyThemeColor }}-500 rounded-full h-4 w-4 transition duration-150 ease-in-out">
             <span class="ml-2 font-medium">Single Page</span>
           </label>
           <label class="inline-flex items-center text-gray-700 cursor-pointer">
-            <input type="radio" name="scrape_mode" value="sitemap" class="form-radio text-indigo-600 focus:ring-indigo-500 rounded-full h-4 w-4 transition duration-150 ease-in-out">
+            <input type="radio" name="scrape_mode" value="sitemap" class="form-radio text-{{ MyThemeColor }}-600 focus:ring-{{ MyThemeColor }}-500 rounded-full h-4 w-4 transition duration-150 ease-in-out">
             <span class="ml-2 font-medium">Full Sitemap</span>
           </label>
         </div>
@@ -65,11 +65,11 @@
           name="scrape_url"
           placeholder="e.g., https://example.com/sitemap.xml"
           required
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-{{ MyThemeColor }}-500 focus:border-{{ MyThemeColor }}-500 transition duration-150 ease-in-out"
         />
       </div>
 
-      <button type="submit" id="start-button" class="w-full flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition duration-200 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+      <button type="submit" id="start-button" class="w-full flex items-center justify-center space-x-2 bg-{{ MyThemeColor }}-600 hover:bg-{{ MyThemeColor }}-700 text-white font-semibold py-3 rounded-lg transition duration-200 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-{{ MyThemeColor }}-500 focus:ring-offset-2">
         <i data-lucide="play"></i>
         <span>Start Scraping</span>
       </button>
@@ -84,11 +84,11 @@
       <div class="space-y-3">
         <p class="flex justify-between text-sm text-gray-600">
           <span class="font-medium text-gray-800">Scraped Pages:</span>
-          <span id="scraped-pages" class="font-bold text-indigo-600">0</span>
+          <span id="scraped-pages" class="font-bold text-{{ MyThemeColor }}-600">0</span>
         </p>
         <p class="flex justify-between text-sm text-gray-600">
           <span class="font-medium text-gray-800">Remaining Pages:</span>
-          <span id="remaining-pages" class="font-bold text-indigo-600">0</span>
+          <span id="remaining-pages" class="font-bold text-{{ MyThemeColor }}-600">0</span>
         </p>
         <p class="text-sm text-gray-600">
           <span class="font-medium text-gray-800 block mb-1">Currently Scraping:</span>
@@ -96,7 +96,7 @@
         </p>
         <p class="flex justify-between text-sm text-gray-600">
           <span class="font-medium text-gray-800">Total Characters Scraped:</span>
-          <span id="total-chars" class="font-bold text-indigo-600">0</span>
+          <span id="total-chars" class="font-bold text-{{ MyThemeColor }}-600">0</span>
         </p>
         <p id="scraping-completed" class="hidden mt-4 text-center p-3 bg-green-100 text-green-700 font-semibold rounded-lg text-base">
           <i data-lucide="check-circle" class="inline-block mr-2"></i>
