@@ -249,8 +249,7 @@ def save_scraped_data_to_db_sync(scraped_data, user_id, scrape_mode):
         meta_title=scraped_data.get('meta_title'),
         meta_description=scraped_data.get('meta_description'),
         meta_keywords=scraped_data.get('meta_keywords'),
-        # Use the first 500 characters of the content as a summary for the model field
-        content_summary=scraped_data.get('content', '')[:500] 
+        content_summary=scraped_data.get('content', '')
     )
     print(f"Successfully saved new entry for: {normalized_url_str}")
     return True
