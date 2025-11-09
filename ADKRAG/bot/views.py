@@ -18,8 +18,6 @@ from myapp.models import AppSettings
 # Store status for each user (this could be moved to a database if persistence is required)
 scraping_status = {}
 
-#####################################################################################
-
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
@@ -31,10 +29,8 @@ import numpy as np
 import os
 import json
 from sentence_transformers import SentenceTransformer
-from groq import Groq
 
 # --- Initialize Global Resources ---
-# Load the embedding model and Groq client once globally to reuse resources.
 try:
     # Adjust this path if your model is not cached/downloaded correctly
     model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -42,20 +38,6 @@ try:
 except Exception as e:
     print(f"Error loading SentenceTransformer model: {e}")
     model = None
-
-# Initialize Groq client using environment variable
-GROQ_API_KEY = os.getenv("GROQ_API_KEY") or getattr(settings, 'GROQ_API_KEY', None)
-
-if not GROQ_API_KEY:
-    print("Warning: GROQ_API_KEY not found. API functions will likely fail.")
-    client = None
-else:
-    try:
-        client = Groq(api_key=GROQ_API_KEY)
-        print("Groq client initialized.")
-    except Exception as e:
-        print(f"Error initializing Groq client: {e}")
-        client = None
 
 # --- Helper Functions ---
 
@@ -68,23 +50,6 @@ def get_document_options_from_db():
     
     # Return a list of unique document strings
     return list(set(entries))
-
-# def get_document_options_from_db(user_id):
-#     """
-#     Fetches unique content summaries (documents) from the ScrapedDataEntry model,
-#     FILTERED by the user who scraped the data.
-#     """
-#     # Exclude entries that are null or empty AND filter by scraped_by_user_id
-#     entries = ScrapedDataEntry.objects.filter(
-#         scraped_by_user_id=user_id
-#     ).exclude(
-#         content_summary__isnull=True
-#     ).exclude(
-#         content_summary__exact=''
-#     ).values_list('content_summary', flat=True)
-    
-#     # Return a list of unique document strings
-#     return list(set(entries))
 
 def find_best_match(question, documents):
     """
@@ -117,35 +82,11 @@ def find_best_match(question, documents):
 
     return best_match_document
 
-def generate_reply(message_text):
-    """
-    Uses Groq's Llama 3.1 8B Instant model to generate a concise reply
-    based on the best-matched document content (RAG).
-    """
-    if client is None:
-        return "API Key Missing: Cannot generate reply without GROQ_API_KEY."
-
-    try:
-        completion = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": "You are a concise blog summarizer. Respond only to the user's prompt based on the provided text, keeping the reply under 50 words."},
-                {"role": "user", "content": message_text}
-            ],
-            temperature=0.7,
-            max_tokens=100,
-            stream=False,
-        )
-        return completion.choices[0].message.content.strip()
-    except Exception as e:
-        print(f"Groq API Error: {e}")
-        return f"Sorry, an API error occurred during generation: {str(e)}"
-
 # --- Django View for API Endpoint ---
 
 @csrf_exempt
 def api_search(request):
-    """Handles the API request for vector search and Groq generation."""
+    """Handles the API request for vector search."""
     if request.method != 'POST':
         return JsonResponse({"error": "Method not allowed"}, status=405)
     
@@ -156,14 +97,12 @@ def api_search(request):
         return JsonResponse({"error": "Invalid JSON format"}, status=400)
         
     question = data.get('question', '').strip()
-    # user_id = str(request.user.id) 
 
     if not question:
         return JsonResponse({"error": "Question field is required"}, status=400)
 
     try:
         # 1. Get documents from the model
-        # document_options = get_document_options_from_db(user_id)
         document_options = get_document_options_from_db()
         
         if not document_options:
@@ -172,16 +111,12 @@ def api_search(request):
         # 2. Find the most relevant document (semantic search)
         best_match_content = find_best_match(question, document_options)
         
-        # 3. Use the relevant content to generate a Groq reply (RAG)
         prompt = (
             f'User Question: "{question}" \n\n '
             f'Based on the following relevant content, write a helpful and short reply (under 50 words): \n\n '
             f'Content: "{best_match_content}"'
         )
-        # prompt = generate_reply(prompt)
         
-        # Return results as JSON
-        # Note: 'graph_url' is explicitly removed.
         return JsonResponse({
             "answer": prompt,
             "question": question,
@@ -194,9 +129,6 @@ def api_search(request):
     except Exception as e:
         print(f"Error during API processing: {e}")
         return JsonResponse({"error": f"An internal server error occurred: {str(e)}"}, status=500)
-
-########################################################################################
-
 
 # Define the ScrapedData model using Pydantic for structured data
 class ScrapedData(BaseModel):

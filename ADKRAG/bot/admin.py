@@ -10,7 +10,7 @@ class ScrapedDataEntryAdmin(admin.ModelAdmin):
     list_display_links = ('url', 'name_display')
     
     # Fields that can be used to filter the list view
-    list_filter = ('scrape_mode', 'scraped_at')
+    list_filter = ('scrape_mode', 'scraped_at', 'scraped_by_user_id')
     
     # Fields to use for search (searches across these fields)
     search_fields = ('url', 'name', 'meta_description', 'scraped_by_user_id')

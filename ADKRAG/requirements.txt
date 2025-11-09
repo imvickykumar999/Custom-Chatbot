@@ -1,21 +1,16 @@
-
-# myapp
 django 
 django-jazzmin
 djangorestframework 
 google-adk 
 gunicorn
-
-# bot
 beautifulsoup4
 pydantic
 aiohttp
-crawl4ai
-
-# playwright install
 faiss-cpu
 numpy
 matplotlib
 sentence-transformers
 scikit-learn
-groq
+
+# playwright install
+crawl4ai
