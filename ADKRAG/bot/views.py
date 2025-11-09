@@ -520,12 +520,11 @@ def get_scrape_status(request, user_id):
 
 # NOTE: The old append_data_to_file function has been removed.
 
-# Django view for scrape page
 def scrape(request):
     # This view is for rendering the HTML template
 
     try:
-        # Filtering by the logged-in user: request.user
+        # 1. Fetch user-specific settings
         settings_obj, created = AppSettings.objects.get_or_create(user=request.user)
     except Exception as e:
         # Fallback to hardcoded defaults in case of a serious DB issue
@@ -536,9 +535,24 @@ def scrape(request):
             website_logo_url='https://avatars.githubusercontent.com/u/67197854',
             theme_color='indigo',
         )
-
+    
     MyThemeColor = settings_obj.theme_color
+    
+    # --- NEW: Fetch ScrapedDataEntry objects for the current user ---
+    # We use a placeholder ID if the user is anonymous/not logged in for development
+    user_id_str = str(request.user.id) if request.user.is_authenticated else 'placeholder-user-id-123'
+    
+    try:
+        # Filter entries by the user who scraped them
+        scraped_data_entries = ScrapedDataEntry.objects.filter(
+            scraped_by_user_id=user_id_str
+        ).order_by('-scraped_at')
+    except Exception as e:
+        print(f"Error fetching ScrapedDataEntry: {e}")
+        scraped_data_entries = [] # Fallback to empty list
 
     return render(request, 'index.html', {
-        'MyThemeColor' : MyThemeColor,
+        'MyThemeColor': MyThemeColor,
+        'scraped_entries': scraped_data_entries, # <-- PASS THE DATA
+        'current_user_id': user_id_str,         # <-- PASS THE USER ID
     })

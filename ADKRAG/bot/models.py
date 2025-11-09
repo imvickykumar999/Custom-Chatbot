@@ -17,9 +17,7 @@ class ScrapedDataEntry(models.Model):
         ('sitemap', 'Full Sitemap')
     ], default='single')
     scraped_at = models.DateTimeField(auto_now_add=True)
-    
-    # Content summary (since the full content is too big/complex for a simple model field)
-    content_summary = models.TextField(verbose_name="Content Summary (First 500 chars)", null=True, blank=True)
+    content_summary = models.TextField(verbose_name="Content Summary", null=True, blank=True)
 
     class Meta:
         verbose_name = "Scraped Data Entry"

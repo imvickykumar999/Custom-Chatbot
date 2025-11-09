@@ -21,90 +21,137 @@
         width: 1.25rem;
         height: 1.25rem;
     }
+    /* Ensure the data list height works well on screens */
+    .data-list-container {
+        max-height: 80vh; 
+        overflow-y: auto;
+    }
   </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen flex items-start justify-center">
 
   <!-- Main Container Card -->
-  <div class="w-full max-w-xl bg-white p-6 md:p-8 rounded-xl shadow-2xl border border-gray-100">
-    <header class="text-center mb-6">
-      <h1 class="text-3xl font-bold text-gray-800 flex items-center justify-center space-x-2">
-        <i data-lucide="spider"></i>
-        <span>Web Crawler</span>
-      </h1>
-      <p class="text-gray-500 text-sm mt-1">Configure your web scraping task.</p>
-    </header>
-
-    <!-- Hidden Input for User ID - SIMULATING BACKEND INJECTION -->
-    <!-- In a Django template, this value would be dynamically set, e.g., value="{{ request.user.id }}" -->
-    <input type="hidden" id="userIdField" value="{{ request.user.id }}" />
+  <!-- Updated to max-w-7xl and flex to accommodate two columns -->
+  <div class="w-full max-w-7xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-2xl border border-gray-100 flex flex-col lg:flex-row gap-8">
     
-    <!-- Status Message Box (Replaces alert()) -->
-    <div id="message-box" class="hidden p-3 mb-4 rounded-lg text-sm transition-all duration-300" role="alert"></div>
+    <!-- LEFT COLUMN: Scrape Form and Live Status -->
+    <div class="lg:w-1/2 w-full"> 
+        <header class="text-center mb-6">
+          <h1 class="text-3xl font-bold text-gray-800 flex items-center justify-center space-x-2">
+            <i data-lucide="spider"></i>
+            <span>Web Crawler</span>
+          </h1>
+          <p class="text-gray-500 text-sm mt-1">Configure your web scraping task.</p>
+        </header>
 
-    <form id="scrape-form">
-      <div class="mb-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Scraping Mode</label>
-        <div class="flex space-x-6">
-          <label class="inline-flex items-center text-gray-700 cursor-pointer">
-            <input type="radio" name="scrape_mode" value="single" checked class="form-radio text-{{ MyThemeColor }}-600 focus:ring-{{ MyThemeColor }}-500 rounded-full h-4 w-4 transition duration-150 ease-in-out">
-            <span class="ml-2 font-medium">Single Page</span>
-          </label>
-          <label class="inline-flex items-center text-gray-700 cursor-pointer">
-            <input type="radio" name="scrape_mode" value="sitemap" class="form-radio text-{{ MyThemeColor }}-600 focus:ring-{{ MyThemeColor }}-500 rounded-full h-4 w-4 transition duration-150 ease-in-out">
-            <span class="ml-2 font-medium">Full Sitemap</span>
-          </label>
+        <!-- Hidden Input for User ID - SIMULATING BACKEND INJECTION -->
+        <!-- The 'current_user_id' comes from the Django view context -->
+        <input type="hidden" id="userIdField" value="{{ current_user_id }}" /> 
+        
+        <!-- Status Message Box (Replaces alert()) -->
+        <div id="message-box" class="hidden p-3 mb-4 rounded-lg text-sm transition-all duration-300" role="alert"></div>
+
+        <form id="scrape-form">
+          <div class="mb-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Scraping Mode</label>
+            <div class="flex space-x-6">
+              <label class="inline-flex items-center text-gray-700 cursor-pointer">
+                <input type="radio" name="scrape_mode" value="single" checked class="form-radio text-{{ MyThemeColor }}-600 focus:ring-{{ MyThemeColor }}-500 rounded-full h-4 w-4 transition duration-150 ease-in-out">
+                <span class="ml-2 font-medium">Single Page</span>
+              </label>
+              <label class="inline-flex items-center text-gray-700 cursor-pointer">
+                <input type="radio" name="scrape_mode" value="sitemap" class="form-radio text-{{ MyThemeColor }}-600 focus:ring-{{ MyThemeColor }}-500 rounded-full h-4 w-4 transition duration-150 ease-in-out">
+                <span class="ml-2 font-medium">Full Sitemap</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <label for="scrape-url" class="block text-sm font-semibold text-gray-700 mb-2">Target URL or Sitemap</label>
+            <input
+              type="url"
+              id="scrape-url"
+              name="scrape_url"
+              placeholder="e.g., https://example.com/sitemap.xml"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-{{ MyThemeColor }}-500 focus:border-{{ MyThemeColor }}-500 transition duration-150 ease-in-out"
+            />
+          </div>
+
+          <button type="submit" id="start-button" class="w-full flex items-center justify-center space-x-2 bg-{{ MyThemeColor }}-600 hover:bg-{{ MyThemeColor }}-700 text-white font-semibold py-3 rounded-lg transition duration-200 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-{{ MyThemeColor }}-500 focus:ring-offset-2">
+            <i data-lucide="play"></i>
+            <span>Start Scraping</span>
+          </button>
+        </form>
+
+        <!-- Status section -->
+        <div id="status-section" class="mt-8 pt-6 border-t border-gray-200 hidden">
+          <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center space-x-2">
+            <i data-lucide="monitor-dot"></i>
+            <span>Live Status</span>
+          </h2>
+          <div class="space-y-3">
+            <p class="flex justify-between text-sm text-gray-600">
+              <span class="font-medium text-gray-800">Scraped Pages:</span>
+              <span id="scraped-pages" class="font-bold text-{{ MyThemeColor }}-600">0</span>
+            </p>
+            <p class="flex justify-between text-sm text-gray-600">
+              <span class="font-medium text-gray-800">Remaining Pages:</span>
+              <span id="remaining-pages" class="font-bold text-{{ MyThemeColor }}-600">0</span>
+            </p>
+            <p class="text-sm text-gray-600">
+              <span class="font-medium text-gray-800 block mb-1">Currently Scraping:</span>
+              <span id="current-url" class="block text-xs font-mono bg-gray-100 p-2 rounded-md truncate">None</span>
+            </p>
+            <p class="flex justify-between text-sm text-gray-600">
+              <span class="font-medium text-gray-800">Total Characters Scraped:</span>
+              <span id="total-chars" class="font-bold text-{{ MyThemeColor }}-600">0</span>
+            </p>
+            <!-- This message is now persistent when scraping is completed -->
+            <p id="scraping-completed" class="hidden mt-4 text-center p-3 bg-green-100 text-green-700 font-semibold rounded-lg text-base">
+              <i data-lucide="check-circle" class="inline-block mr-2"></i>
+              🎉 Scraping Completed!
+            </p>
+          </div>
         </div>
-      </div>
+    </div> <!-- END LEFT COLUMN -->
 
-      <div class="mb-6">
-        <label for="scrape-url" class="block text-sm font-semibold text-gray-700 mb-2">Target URL or Sitemap</label>
-        <input
-          type="url"
-          id="scrape-url"
-          name="scrape_url"
-          placeholder="e.g., https://example.com/sitemap.xml"
-          required
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-{{ MyThemeColor }}-500 focus:border-{{ MyThemeColor }}-500 transition duration-150 ease-in-out"
-        />
-      </div>
-
-      <button type="submit" id="start-button" class="w-full flex items-center justify-center space-x-2 bg-{{ MyThemeColor }}-600 hover:bg-{{ MyThemeColor }}-700 text-white font-semibold py-3 rounded-lg transition duration-200 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-{{ MyThemeColor }}-500 focus:ring-offset-2">
-        <i data-lucide="play"></i>
-        <span>Start Scraping</span>
-      </button>
-    </form>
-
-    <!-- Status section -->
-    <div id="status-section" class="mt-8 pt-6 border-t border-gray-200 hidden">
-      <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center space-x-2">
-        <i data-lucide="monitor-dot"></i>
-        <span>Live Status</span>
-      </h2>
-      <div class="space-y-3">
-        <p class="flex justify-between text-sm text-gray-600">
-          <span class="font-medium text-gray-800">Scraped Pages:</span>
-          <span id="scraped-pages" class="font-bold text-{{ MyThemeColor }}-600">0</span>
-        </p>
-        <p class="flex justify-between text-sm text-gray-600">
-          <span class="font-medium text-gray-800">Remaining Pages:</span>
-          <span id="remaining-pages" class="font-bold text-{{ MyThemeColor }}-600">0</span>
-        </p>
-        <p class="text-sm text-gray-600">
-          <span class="font-medium text-gray-800 block mb-1">Currently Scraping:</span>
-          <span id="current-url" class="block text-xs font-mono bg-gray-100 p-2 rounded-md truncate">None</span>
-        </p>
-        <p class="flex justify-between text-sm text-gray-600">
-          <span class="font-medium text-gray-800">Total Characters Scraped:</span>
-          <span id="total-chars" class="font-bold text-{{ MyThemeColor }}-600">0</span>
-        </p>
-        <p id="scraping-completed" class="hidden mt-4 text-center p-3 bg-green-100 text-green-700 font-semibold rounded-lg text-base">
-          <i data-lucide="check-circle" class="inline-block mr-2"></i>
-          🎉 Scraping Completed!
-        </p>
-      </div>
-    </div>
-  </div>
+    <!-- RIGHT COLUMN: Display Scraped Data -->
+    <div class="lg:w-1/2 w-full lg:border-l lg:pl-8 border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center space-x-2">
+            <i data-lucide="database"></i>
+            <span>Scraped Data Entries ({{ scraped_entries|length }})</span>
+        </h2>
+        
+        {% if scraped_entries %}
+        <div class="space-y-4 data-list-container pr-2">
+            {% for entry in scraped_entries %}
+            <div class="p-4 border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition duration-150 ease-in-out">
+                <p class="text-xs font-mono text-{{ MyThemeColor }}-600 truncate mb-1" title="{{ entry.url }}">
+                    {{ entry.url }}
+                </p>
+                <h3 class="text-base font-semibold text-gray-800 mb-2">
+                    {{ entry.name|default:"[No H1 Tag]" }}
+                </h3>
+                <p class="text-sm text-gray-600 mb-1">
+                    <span class="font-medium">Mode:</span> {{ entry.get_scrape_mode_display }} | 
+                    <span class="font-medium">Date:</span> {{ entry.scraped_at|date:"M d, H:i" }}
+                </p>
+                <p class="text-sm text-gray-500 italic mt-2">
+                    {{ entry.content_summary|default:"No content summary recorded."|truncatechars:100 }}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-6 text-center text-gray-500 bg-gray-50 rounded-lg">
+            <i data-lucide="info" class="w-6 h-6 mx-auto mb-2"></i>
+            <p>No data has been scraped yet by this user.</p>
+        </div>
+        {% endif %}
+    </div> <!-- END RIGHT COLUMN -->
+    
+  </div> <!-- END Main Container Card -->
 
   <script>
     // Initialize Lucide icons
@@ -115,15 +162,16 @@
     const startButton = document.getElementById('start-button');
     const messageBox = document.getElementById('message-box');
     const statusSection = document.getElementById('status-section');
+    const scrapingCompletedMessage = document.getElementById("scraping-completed"); // Get the element once
     
     // The user ID from the hidden field (simulating backend injection)
     const userId = userIdField.value;
 
     /**
-     * Shows a non-blocking message to the user.
-     * @param {string} message The message content.
-     * @param {string} type The type of message ('success', 'error', 'info').
-     */
+      * Shows a non-blocking message to the user.
+      * @param {string} message The message content.
+      * @param {string} type The type of message ('success', 'error', 'info').
+      */
     function showMessage(message, type = 'info') {
       messageBox.textContent = message;
       messageBox.className = 'p-3 mb-4 rounded-lg text-sm transition-all duration-300';
@@ -136,12 +184,18 @@
       }
       
       messageBox.classList.add(...baseClasses.split(' '), 'block');
-      setTimeout(() => messageBox.classList.remove('block'), 5000); // Hide after 5 seconds
+      // Hide after 5 seconds, but only if no new message overwrites it
+      setTimeout(() => {
+        if (messageBox.textContent === message) {
+            messageBox.classList.remove('block');
+            messageBox.textContent = '';
+        }
+      }, 5000); 
     }
 
     /**
-     * Fetches and updates the current scraping status.
-     */
+      * Fetches and updates the current scraping status.
+      */
     async function updateStatus() {
       // Use the dynamically retrieved userId
       if (!userId || userId === 'placeholder-user-id-123') {
@@ -155,7 +209,7 @@
         const response = await fetch(`/bot/api/scrape/status/${userId}/`);
         const data = await response.json();
 
-        if (data.error && data.scraped_pages === 0) {
+        if (data.error && data.scraped_pages === 0 && data.remaining_pages === 0) {
             // If we get an error response (like "No task found") and nothing was scraped, 
             // the task is definitely not active. Stop polling immediately.
             if (pollingInterval) {
@@ -164,12 +218,14 @@
             }
             // Only show the error if it's not the generic "No scraping task found" message,
             // which occurs on page load if no scrape is running.
-            if (data.error !== "No scraping task found for this user_id.") {
-                 showMessage(`Error checking status: ${data.error}`, 'error');
+            if (data.error && data.error !== "No scraping task found for this user_id.") {
+                showMessage(`Error checking status: ${data.error}`, 'error');
             }
             startButton.disabled = false;
-            startButton.textContent = 'Start Scraping';
+            startButton.innerHTML = '<i data-lucide="play"></i> <span>Start Scraping</span>';
             lucide.createIcons();
+            // Ensure the completion message is hidden if no job is active
+            scrapingCompletedMessage.classList.add("hidden"); 
             return;
         }
 
@@ -177,9 +233,14 @@
         document.getElementById("remaining-pages").textContent = data.remaining_pages || 0;
         document.getElementById("current-url").textContent = data.current_url || "None";
         document.getElementById("total-chars").textContent = data.total_characters_scraped || 0;
-        document.getElementById("scraping-completed").classList.add("hidden");
+        
+        // --- FIX: Ensure message box is cleared if active scraping starts/continues
+        if (data.is_scraping === true) {
+            // Hide the completion message when scraping is running
+            scrapingCompletedMessage.classList.add("hidden"); 
+        }
 
-        // --- FIXED POLLING STOP CONDITION ---
+        // --- POLLING STOP CONDITION ---
         // Stop if scraping is finished (is_scraping=false AND remaining_pages=0)
         if (data.remaining_pages === 0 && data.is_scraping === false) {
           clearInterval(pollingInterval);
@@ -187,19 +248,22 @@
           
           if (data.scraped_pages > 0) {
             // Only show completion if actual work was done
-            document.getElementById("scraping-completed").classList.remove("hidden");
-            showMessage("Scraping Completed! See details below.", 'success');
+            scrapingCompletedMessage.classList.remove("hidden");
           } else if (data.error) {
             // Show error if it finished immediately due to an error (e.g., empty sitemap)
             showMessage(`Scraping finished with error: ${data.error}`, 'error');
+            scrapingCompletedMessage.classList.add("hidden"); // Ensure completion is hidden on error
+          } else {
+            // Hide completion message if 0 pages scraped with no error
+            scrapingCompletedMessage.classList.add("hidden");
           }
 
           startButton.disabled = false;
-          startButton.textContent = 'Start Scraping';
+          startButton.innerHTML = '<i data-lucide="play"></i> <span>Start Scraping</span>';
           lucide.createIcons();
         } else if (data.is_scraping === true) {
-             startButton.textContent = 'Scraping in Progress...';
-             startButton.disabled = true;
+              startButton.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> <span>Scraping in Progress...</span>';
+              startButton.disabled = true;
         }
 
       } catch (error) {
@@ -208,18 +272,21 @@
         clearInterval(pollingInterval);
         pollingInterval = null;
         startButton.disabled = false;
-        startButton.textContent = 'Start Scraping';
+        startButton.innerHTML = '<i data-lucide="play"></i> <span>Start Scraping</span>';
         lucide.createIcons();
       }
     }
 
     /**
-     * Handles the form submission to start the scraping job.
-     * @param {Event} e The submit event.
-     */
+      * Handles the form submission to start the scraping job.
+      * @param {Event} e The submit event.
+      */
     async function handleFormSubmit(e) {
       e.preventDefault();
-
+      
+      // Hide the persistent completion message when a new scrape starts
+      scrapingCompletedMessage.classList.add("hidden"); 
+      
       if (pollingInterval) {
         showMessage("A scraping job is already running.", 'info');
         return;
@@ -227,7 +294,6 @@
       
       // Reset status section
       statusSection.classList.add("hidden");
-      document.getElementById("scraping-completed").classList.add("hidden");
       
       const form = e.target;
       const formData = new FormData(form);
@@ -240,12 +306,12 @@
       }
       
       if (!userId || userId === 'placeholder-user-id-123') {
-          showMessage("Cannot start scrape: User is not authenticated (Placeholder ID detected).", 'error');
+          showMessage("Cannot start scrape: User is not authenticated.", 'error');
           console.error("Cannot start scrape: User ID is not set or is a placeholder.");
           return;
       }
 
-      startButton.textContent = 'Starting...';
+      startButton.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> <span>Starting...</span>';
       startButton.disabled = true;
 
       // Create the JSON payload
@@ -268,17 +334,20 @@
         const responseData = await response.json();
 
         if (response.ok) {
+          // This success message is temporary and still uses showMessage
           showMessage("Scraping successfully started! Status updates below.", 'success');
           statusSection.classList.remove("hidden");
           // Initialize status immediately
           updateStatus();
           // Start polling for status updates every second
-          pollingInterval = setInterval(updateStatus, 1000);
+          if (!pollingInterval) {
+            pollingInterval = setInterval(updateStatus, 1000);
+          }
         } else {
           // Handle API errors (e.g., URL invalid, quota exceeded)
           const errorMsg = responseData.error || responseData.detail || "Unknown error.";
           showMessage(`Error starting scrape: ${errorMsg}`, 'error');
-          startButton.textContent = 'Start Scraping';
+          startButton.innerHTML = '<i data-lucide="play"></i> <span>Start Scraping</span>';
           startButton.disabled = false;
           lucide.createIcons(); // Re-render icon
         }
@@ -286,7 +355,7 @@
       } catch (error) {
         console.error("Network error during scrape start:", error);
         showMessage("A network error occurred. Could not connect to the API.", 'error');
-        startButton.textContent = 'Start Scraping';
+        startButton.innerHTML = '<i data-lucide="play"></i> <span>Start Scraping</span>';
         startButton.disabled = false;
         lucide.createIcons(); // Re-render icon
       }
@@ -298,15 +367,12 @@
     // Initial status check in case a scrape was already running when the page loaded
     setTimeout(() => {
         if (userId && userId !== 'placeholder-user-id-123') {
-            updateStatus();
-            statusSection.classList.remove("hidden");
-            // If a scrape is found to be running by updateStatus, pollingInterval will be started later.
-            // If no scrape is found, updateStatus will stop polling if it was started.
-            if (!pollingInterval) {
-                // We start polling here only for the initial check on load.
-                // updateStatus will immediately clear it if no task is active.
+             updateStatus();
+             statusSection.classList.remove("hidden");
+             // Start polling if it wasn't started by the first updateStatus call (i.e., if a task is running)
+             if (!pollingInterval) {
                 pollingInterval = setInterval(updateStatus, 1000);
-            }
+             }
         }
     }, 50);
 
